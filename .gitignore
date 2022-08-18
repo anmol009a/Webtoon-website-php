@@ -4,4 +4,7 @@ demo/
 
 # ignore ALL .log files
 *.log
+
+# ignore files
 1.php
+parsehub.log

@@ -18,7 +18,7 @@ echo '<ul class="list-group">';
 while ($row = mysqli_fetch_assoc($result)) {
     $noresults = false;
     $webtoon_title = $row['w_title'];
-    $webtoon_url = $row['w_link'];
+    $webtoon_url = $row['w_url'];
 
 
 

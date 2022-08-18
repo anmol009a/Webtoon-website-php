@@ -29,14 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     else {
         // add new webtoon
         $webtoon_title = $_POST['webtoonTitle'];
-        $webtoon_link = $_POST['webtoonUrl'];
-        $chapter_link = $_POST['chapterUrl'];
+        $webtoon_url = $_POST['webtoonUrl'];
+        $chapter_url = $_POST['chapterUrl'];
         $chapter_no = $_POST['webtoonChapters'];
         $w_cover = $_POST['webtoonCover'];
 
 
         // insert webtoon into db
-        $sql = "INSERT INTO `webtoons` (`w_title`, `w_link`, `w_cover`) VALUES ('$webtoon_title', '$webtoon_link', '$w_cover')";
+        $sql = "INSERT INTO `webtoons` (`w_title`, `w_url`, `w_cover`) VALUES ('$webtoon_title', '$webtoon_url', '$w_cover')";
         $result = mysqli_query($conn, $sql);
 
         // fetch current w_id
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $webtoon_id = $row['w_id'];
 
         // insert chapters into db
-        $sql = "INSERT INTO `chapters` (`c_no`, `c_link`, `w_id`) VALUES ('$chapter_no', '$chapter_link', '$webtoon_id')";
+        $sql = "INSERT INTO `chapters` (`c_no`, `c_url`, `w_id`) VALUES ('$chapter_no', '$chapter_url', '$webtoon_id')";
         $result = mysqli_query($conn, $sql);
 
         // Alert Confirmation
@@ -190,7 +190,7 @@ if (isset($_GET['delete'])) {
 
                     echo "<tr class=''>
                             <th scope='row' w_id='$w_id'>" . $sno . "</th>
-                            <td><a href='" . $row['w_link'] . "'>" . $row['w_title'] . "</a></td>
+                            <td><a href='" . $row['w_url'] . "'>" . $row['w_title'] . "</a></td>
                             <td>" . $row2['c_no'] . "</td>
                             <td> <button class='edit btn btn-sm btn-primary' w_id='" . $row['w_id'] . "'>Update</button> <button class='delete btn btn-sm btn-primary' w_id='d" . $row['w_id'] . "'>Delete</button>  </td>
                         </tr>";

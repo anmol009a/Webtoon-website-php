@@ -28,7 +28,7 @@ function post_date_format($baseObject, $targetObject)
 function save_img($img_url, $img_name, $img_path)
 {
 
-    if (file_put_contents(DIR . $img_path, file_get_contents($img_url))) { //check if img link works
+    if (file_put_contents($img_path, file_get_contents($img_url))) { //check if img link works
         // Function to write image into file
         // storing img
         echo "Img Saved! : $img_name";
@@ -122,4 +122,24 @@ function deleteRun($api_key, $run_token)
     $parsehub = new Parsehub($api_key);
     $delete_run = $parsehub->deleteProjectRun($run_token);
     // var_dump($delete_run);
+}
+
+function db_connect()
+{
+    // Connecting to the Database
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    // $database = "webtoon_world";
+    $database = "webtoon_world2";
+
+    // Create a connection
+    $conn = mysqli_connect($servername, $username, $password, $database);
+
+    // Die if connection was not successful
+    if (!$conn) {
+        die("Sorry we failed to connect: " . mysqli_connect_error());
+    } else {
+        // echo "Connection was successful<br>";
+    }
 }
