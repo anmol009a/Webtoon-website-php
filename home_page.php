@@ -25,7 +25,7 @@
             ?>
         </div>
 
-        <button id="load-more-btn" class="btn btn-outline-dark">Load More</button>
+        <button id="load-more-btn" class="btn btn-dark w-100">Load More</button>
 
     </div>
 

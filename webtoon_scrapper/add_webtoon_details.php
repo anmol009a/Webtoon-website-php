@@ -2,27 +2,31 @@
 // ----------------------- sql prepare and bind ---------------------------
 
 // insert webtoon into db
-$stmt1 = $conn->prepare("INSERT INTO webtoons (`w_title`, `w_link`) VALUES (?,?)");
+$stmt1 = $conn->prepare("INSERT INTO webtoons (`w_title`, `w_url`) VALUES (?,?)");
 $stmt1->bind_param("ss", $webtoon_title, $webtoon_url);
 
 // insert chapter into db
-$stmt2 = $conn->prepare("INSERT INTO `chapters` (`c_name`,`c_no`, `c_link`, `w_id`) VALUES (?, ?, ?, ?)");
-$stmt2->bind_param("sdsi", $chapter_name, $chapter_no, $chapter_url, $webtoon_id);
+$stmt2 = $conn->prepare("INSERT INTO `chapters` (`c_name`,`c_no`, `c_url`, `w_id`) VALUES (?, ?, ?, ?)");
+$stmt2->bind_param("sssi", $chapter_name, $chapter_no, $chapter_url, $webtoon_id);
 
 // insert cover_url
 $stmt3 = $conn->prepare("INSERT INTO covers (`cover_url`,`w_id`) VALUES (?, ?)");
 $stmt3->bind_param("si", $webtoon_cover_url, $webtoon_id);
 
 // fetch w_id
-$stmt4 = $conn->prepare("SELECT w_id FROM webtoon_details WHERE w_title = ?");
+$stmt4 = $conn->prepare("SELECT w_id FROM webtoons WHERE w_title = ?");
 $stmt4->bind_param("s", $webtoon_title);
 
-// update last_mod, w_link
-$stmt5 = $conn->prepare("UPDATE `webtoons` SET `w_link` = ?,`last_mod` = CURRENT_TIMESTAMP WHERE `webtoons`.`w_id` = ?");
+// fetch w_id, cover_url
+$stmt13 = $conn->prepare("SELECT w_id, cover_url FROM webtoon_details WHERE w_title = ?");
+$stmt13->bind_param("s", $webtoon_title);
+
+// update last_mod, w_url
+$stmt5 = $conn->prepare("UPDATE `webtoons` SET `w_url` = ?,`last_mod` = CURRENT_TIMESTAMP WHERE `webtoons`.`w_id` = ?");
 $stmt5->bind_param("si", $webtoon_url, $webtoon_id);
 
 // update chapters
-$stmt9 = $conn->prepare("UPDATE `chapters` SET `c_name` = ?, c_no = ?, c_link = ? WHERE `w_id` = ? AND c_no = ?");
+$stmt9 = $conn->prepare("UPDATE `chapters` SET `c_name` = ?, c_no = ?, c_url = ? WHERE `w_id` = ? AND c_no = ?");
 $stmt9->bind_param("sssis", $chapter_name, $chapter_no, $chapter_url, $webtoon_id, $c_no);
 
 // get chapter No
@@ -45,8 +49,8 @@ foreach ($webtoons as $webtoon) {
 
     // fetching webtoon records if exits 
     // fetch w_id 
-    $result = $stmt4->execute() or die($stmt4->error);
-    $result = $stmt4->get_result();
+    $result = $stmt13->execute() or die($stmt13->error);
+    $result = $stmt13->get_result();
     $row = $result->fetch_assoc();
     if ($row) {
         echo "<hr>";
@@ -54,10 +58,11 @@ foreach ($webtoons as $webtoon) {
         echo "<br>";
 
         $webtoon_id = $row['w_id']; // fetch w_id 
+        $cover_url = $row['cover_url']; // fetch cover_url 
 
         try {
             // update cover details
-            if ($webtoon_id) {
+            if (isset($cover_url)) {
                 $result = $stmt11->execute() or die($stmt11->error);
                 if ($result) {
                     echo "Updated cover details : " . $webtoon_cover_url;
@@ -122,7 +127,7 @@ foreach ($webtoons as $webtoon) {
             }
         } catch (Exception $e) {
             // echo "<br>";
-            echo "Failed to insert webtoon details : " . $e->getMessage();
+            echo "Failed to update webtoon details : " . $e->getMessage();
             echo "<br>";
         }
     } else {
@@ -145,6 +150,7 @@ foreach ($webtoons as $webtoon) {
                     echo "Inserted cover details : " . $webtoon_cover_url;
                     echo "<br>";
                 }
+                
                 if (isset($webtoon->chapter)) {
 
                     for ($i = 0; $i < 2; $i++) {
@@ -178,3 +184,4 @@ $stmt9->close();
 $stmt10->close();
 $stmt11->close();
 $stmt12->close();
+$stmt13->close();

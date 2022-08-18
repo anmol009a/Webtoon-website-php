@@ -12,9 +12,9 @@ $stmt->bind_param("i", $webtoon_id);
 // pagination
 $offset = isset($_GET['p']) ? $_GET['p'] * 30 : 0;
 if ($offset) {
-    $sql = "SELECT w_id, w_title, w_link, cover_path from `webtoon_details` ORDER BY `last_mod` DESC LIMIT 30 OFFSET $offset";
+    $sql = "SELECT w_id, w_title, w_url, cover_path from `webtoon_details` ORDER BY `last_mod` DESC LIMIT 30 OFFSET $offset";
 } else {
-    $sql = "SELECT w_id, w_title, w_link, cover_path from `webtoon_details` ORDER BY `last_mod` DESC LIMIT 30";
+    $sql = "SELECT w_id, w_title, w_url, cover_path from `webtoon_details` ORDER BY `last_mod` DESC LIMIT 30";
 }
 
 
@@ -26,7 +26,7 @@ $result = mysqli_query($conn, $sql);
 while ($row = mysqli_fetch_assoc($result)) {
     $webtoon_id = $row['w_id'];
     $webtoon_title = $row['w_title'];
-    $webtoon_link = $row['w_link'];
+    $webtoon_url = $row['w_url'];
     $cover_path = $row['cover_path'];
 
 
@@ -34,14 +34,14 @@ while ($row = mysqli_fetch_assoc($result)) {
     echo '
     <div class="post-item-details col mb-5">
         <div class="container-post-img">
-            <a href="' . $webtoon_link . '" target="_blank" title="' . $webtoon_title . '">
+            <a href="' . $webtoon_url . '" target="_blank" title="' . $webtoon_title . '">
                 <img class="post-img" src="' . $cover_path . '" alt="' . $webtoon_title . '">
             </a>
         </div>
         <div class="post-details">
             <div class="container-post-title mt-2">
                 <h5 class="post-title">
-                    <a href="' . $webtoon_link . '" target="_blank">' . $webtoon_title . '
+                    <a href="' . $webtoon_url . '" target="_blank">' . $webtoon_title . '
                     </a>
                 </h5>
             </div>
@@ -56,7 +56,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 
             // $chapter_name[$i] = isset($row2['c_name']) ? $row2['c_name'] : $row2['c_no'];
             $chapter_no[$i] = "Chapter " . $row2['c_no'];
-            $chapter_link[$i] = $row2['c_link'];
+            $chapter_url[$i] = $row2['c_url'];
 
             // ---------------------------------------------------------------------------------
             $c_posted_on[$i] = new DateTime($row2['c_posted_on'], new DateTimeZone('Asia/Kolkata'));  // convert the string to a date variable
@@ -67,7 +67,7 @@ while ($row = mysqli_fetch_assoc($result)) {
             echo '
                 <div class="chapter-item mt-2">
                     <span>
-                        <a href="' . $chapter_link[$i] . '" target="_blank">
+                        <a href="' . $chapter_url[$i] . '" target="_blank">
                             <button type="button" class="btn btn-outline-dark chapter-btn overflow-hidden">' . $chapter_no[$i] . '</button>
                         </a>
                     </span>
@@ -75,7 +75,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                 </div>';
         }
     }
-
 
     echo '
             </div>

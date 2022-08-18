@@ -9,9 +9,6 @@
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="index.php">Home</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="temp.php">Webtoon Functions</a>
-                </li>
             </ul>
             <form action="search_results.php" class="d-flex" role="search" target="_blank">
                 <input class="form-control me-2" type="search" name="s" placeholder="Search" aria-label="Search">
