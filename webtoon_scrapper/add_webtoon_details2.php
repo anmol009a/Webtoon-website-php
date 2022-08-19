@@ -1,5 +1,17 @@
 <?php
-// ----------------------- sql prepare and bind ---------------------------
+
+/*
+# prepared stmt cache at 000.webhost was not able to store 12 prepared sql stmt, therefore I had to use
+dynamic sql to perform the CRUD operations
+
+# Also, there was ssl verification problem for "file_get_content()" function and there was two methods to solve this:
+    1. to by-pass ssl verification
+    2. to download certificates
+
+# Below prepared stmt are used because normal sql stmt are prone to sql injection, specifically in this case webtoon name and chapter name
+contains special characters which destroys the sql
+*/
+
 
 // insert webtoon into db
 $stmt1 = $conn->prepare("INSERT INTO webtoons (`w_title`, `w_url`) VALUES (?,?)");
@@ -13,29 +25,9 @@ $stmt2->bind_param("sssi", $chapter_name, $chapter_no, $chapter_url, $webtoon_id
 $stmt3 = $conn->prepare("INSERT INTO covers (`cover_url`,`w_id`) VALUES (?, ?)");
 $stmt3->bind_param("si", $webtoon_cover_url, $webtoon_id);
 
-// fetch w_id, cover_url
-$stmt4 = $conn->prepare("SELECT w_id, cover_url FROM webtoon_details WHERE w_title = ?");
-$stmt4->bind_param("s", $webtoon_title);
-
-// update last_mod, w_url
-$stmt5 = $conn->prepare("UPDATE `webtoons` SET `w_url` = ?,`last_mod` = CURRENT_TIMESTAMP WHERE `webtoons`.`w_id` = ?");
-$stmt5->bind_param("si", $webtoon_url, $webtoon_id);
-
 // update chapters
 $stmt9 = $conn->prepare("UPDATE `chapters` SET `c_name` = ?, c_no = ?, c_url = ? WHERE `w_id` = ? AND c_no = ?");
 $stmt9->bind_param("sssis", $chapter_name, $chapter_no, $chapter_url, $webtoon_id, $c_no);
-
-// fetch chapter No
-$stmt10 = $conn->prepare("SELECT c_no, c_name FROM chapters WHERE w_id = ? and c_no = ?");
-$stmt10->bind_param("id", $webtoon_id, $chapter_no);
-
-// update covers
-$stmt11 = $conn->prepare("UPDATE covers SET `cover_url` = ? WHERE `w_id` = ?");
-$stmt11->bind_param("si", $webtoon_cover_url, $webtoon_id);
-
-// get last chapter No
-$stmt12 = $conn->prepare("SELECT c_no FROM chapters WHERE w_id = ? ORDER BY c_no ASC LIMIT 1");
-$stmt12->bind_param("i", $webtoon_id);
 
 foreach ($webtoons as $webtoon) {
     $webtoon_title = $webtoon->name;
@@ -43,11 +35,11 @@ foreach ($webtoons as $webtoon) {
     // $webtoon_cover_url = $webtoon->cover;
     $webtoon_cover_url = isset($webtoon->cover) ? $webtoon->cover : "";
 
-    // fetching webtoon records if exits 
-    // fetch w_id 
-    $result = $stmt4->execute() or die($stmt4->error);
-    $result = $stmt4->get_result();
-    $row = $result->fetch_assoc();
+    
+    // fetch w_id, cover_url
+    $sql = "SELECT w_id, cover_url FROM webtoon_details WHERE w_title = '$webtoon_title'";
+    $result = mysqli_query($conn, $sql);
+    $row = mysqli_fetch_assoc($result);
     if ($row) {
         echo "<hr>";
         echo "Webtoon Present : $webtoon_title";
@@ -59,13 +51,16 @@ foreach ($webtoons as $webtoon) {
         try {
             // update cover details
             if (isset($cover_url)) {
-                $result = $stmt11->execute() or die($stmt11->error);
+                // update covers
+                $sql = "UPDATE covers SET `cover_url` = '$webtoon_cover_url' WHERE `w_id` = $webtoon_id";
+                $result = mysqli_query($conn, $sql);
                 if ($result) {
                     echo "Updated cover details : " . $webtoon_cover_url;
                     echo "<br>";
                 }
             } else {
                 $result = $stmt3->execute() or die($stmt3->error);    // insert cover details
+
                 if ($result) {
                     echo "Inserted cover details : " . $webtoon_cover_url;
                     echo "<br>";
@@ -82,9 +77,10 @@ foreach ($webtoons as $webtoon) {
                     $chapter_no = $matches[0];
                     $chapter_url = $webtoon->chapter[$i]->url;
                     // get C-no
-                    $result = $stmt10->execute() or die($stmt10->error);
-                    $result = $stmt10->get_result();
-                    $row = $result->fetch_assoc();
+                    // fetch chapter No
+                    $sql = "SELECT c_no, c_name FROM chapters WHERE w_id = $webtoon_id and c_no = $chapter_no";
+                    $result = mysqli_query($conn, $sql);
+                    $row = mysqli_fetch_assoc($result);
                     if ($row) {
                         $chapter_name = $row['c_name'];
                         if ($result) {
@@ -93,12 +89,16 @@ foreach ($webtoons as $webtoon) {
                         }
                     } else {
                         // get last c_no
-                        $result = $stmt12->execute() or die($stmt12->error);
-                        $result = $stmt12->get_result();
-                        $row = $result->fetch_assoc();
+                        // get last chapter No
+                        $sql = "SELECT c_no FROM chapters WHERE w_id = $webtoon_id ORDER BY c_no ASC LIMIT 1";
+                        $result = mysqli_query($conn, $sql);
+                        $row = mysqli_fetch_assoc($result);
+
+
                         $c_no = isset($row['c_no']) ? $row['c_no'] : false;
 
                         if (!$c_no) {
+                            // insert chapter into db
                             $result = $stmt2->execute() or die($stmt2->error); // insert chapter into db
                             if ($result) {
                                 echo "Inserted Chapter : $chapter_name";
@@ -116,7 +116,10 @@ foreach ($webtoons as $webtoon) {
                     }
                 }
                 if ($chapter_updated) {
-                    $stmt5->execute() or die($stmt5->error);
+                    // update last_mod, w_url
+                    $sql = "UPDATE `webtoons` SET `w_url` = '$webtoon_url',`last_mod` = CURRENT_TIMESTAMP WHERE `webtoons`.`w_id` = $webtoon_id";
+                    $result = mysqli_query($conn, $sql);
+
                     echo "Upadted Last_mod : $webtoon_title";
                     echo "<br>";
                 }
@@ -128,25 +131,27 @@ foreach ($webtoons as $webtoon) {
         }
     } else {
         try {
-            // inserting webtoon details into db
             $result1 = $stmt1->execute() or die($stmt1->error);  // insert webtoon into db 
-            if ($result1) {
+
+            if ($result) {
                 echo "<hr>";
                 echo "Inserted webtoon: " . $webtoon_title;
                 echo "<br>";
 
                 // fetch w_id 
-                $stmt4->execute() or die($stmt4->error);
-                $result = $stmt4->get_result();
-                $row = $result->fetch_assoc();
+                // fetch w_id, cover_url
+                $sql = "SELECT w_id, cover_url FROM webtoon_details WHERE w_title = '$webtoon_title'";
+                $result = mysqli_query($conn, $sql);
+                $row = mysqli_fetch_assoc($result);
                 $webtoon_id = $row['w_id'];
 
+                // insert cover_url
                 $result = $stmt3->execute() or die($stmt3->error);    // insert cover details
                 if ($result) {
                     echo "Inserted cover details : " . $webtoon_cover_url;
                     echo "<br>";
                 }
-                
+
                 if (isset($webtoon->chapter)) {
 
                     for ($i = 0; $i < 2; $i++) {
@@ -155,6 +160,7 @@ foreach ($webtoons as $webtoon) {
                         $chapter_no = $matches[0];
                         $chapter_url = $webtoon->chapter[$i]->url;
 
+                        // insert chapter into db
                         $result = $stmt2->execute() or die($stmt2->error); // insert chapter into db
                         if ($result) {
                             echo "Inserted Chapter : $chapter_name";
@@ -170,13 +176,15 @@ foreach ($webtoons as $webtoon) {
         }
     }
 }
-
 $stmt1->close();
 $stmt2->close();
 $stmt3->close();
-$stmt4->close();
-$stmt5->close();
 $stmt9->close();
-$stmt10->close();
-$stmt11->close();
-$stmt12->close();
+
+// bypasses ssl verification to download img
+$arrContextOptions=array(
+    "ssl"=>array(
+         "verify_peer"=>false,
+         "verify_peer_name"=>false,
+    ),
+);
