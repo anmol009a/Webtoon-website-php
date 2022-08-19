@@ -8,9 +8,6 @@ $no_results = true;
 
 $search_string = $_GET['s'];
 
-$website_url = 'https://www.webtoon.xyz/read/';
-
-
 $sql = "SELECT * FROM `webtoons` WHERE `w_title` LIKE '%$search_string%' ORDER BY `last_mod` LIMIT 6";
 $result = mysqli_query($conn, $sql);
 
@@ -18,7 +15,7 @@ echo '<ul class="list-group">';
 while ($row = mysqli_fetch_assoc($result)) {
     $noresults = false;
     $webtoon_title = $row['w_title'];
-    $webtoon_url = $row['w_url'];
+    $webtoon_url = $row['w_link'];
 
 
 
